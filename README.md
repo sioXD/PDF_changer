@@ -4,7 +4,8 @@ This is an Software for cropping, renaming and deleting link for PDFs, made in J
 
 ## Folder Structure
 
-PDF_Datien - Original Files
+PDF_Datien - Original Files 
+
 Zugeschnittene_Datein - cropped Files
 
 ## Javascrpt Code for common.js
