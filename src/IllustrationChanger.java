@@ -82,7 +82,7 @@ public class IllustrationChanger {
 
                      // change the name and save
                     String outputFileName = adjustFileName(file.getName());
-                    document.save(new File("src/Zugeschnittene_Datein",outputFileName));    
+                    document.save(new File(outputDir,outputFileName));    
                     document.close();
                     System.out.println(count + "/" + files.length);
 

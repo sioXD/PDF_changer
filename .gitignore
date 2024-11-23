@@ -26,3 +26,7 @@ replay_pid*
 #info for myseld
 github.txt
 github.md
+
+#Materials
+src/IllustrationChanger/
+src/PdfToTxt/
