@@ -21,19 +21,22 @@ public class Main {
             System.out.println("2: PdfToTxt");
             System.out.println();
 
-            Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(i hate it too)
+            Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too)
 
             try {
                 decision = s.nextInt();    
                 
                 if (decision == 0){
+                    System.out.println("\u001b[32m" + "0 selected: quit" + "\u001b[0m");
                     System.exit(0);
                 }else if (decision == 1) {
+                    System.out.println("\u001b[32m" + "1 selected: starting IllustrationChanger\n" + "\u001b[0m");
                     IllustrationChanger Illu = new IllustrationChanger();
                     Illu.IllustrationChange(new File("src/main/resources/IllustrationChanger/PDF_Files"), 
                                         new File("src/main/resources/IllustrationChanger/Cropped_Files"));
 
                 }else if (decision == 2) {
+                    System.out.println("\u001b[32m" + "1 selected: starting PdfToTxt\n" + "\u001b[0m");
                     PdfToTxt PTT = new PdfToTxt();
                     PTT.ToTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
