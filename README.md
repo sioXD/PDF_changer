@@ -1,4 +1,6 @@
-# changePDF
+# PDF_changer
+
+<em>now in Maven</em>
 
 This is a Software for two things:
 
@@ -18,19 +20,19 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 `src\PdfToTxt` - cropped Files
 
-- `src\PdfToTxt\Pdf` - PDF files where the text should be extractet from
+- `src\PdfToTxt\Pdf` - PDF files where the text should be extracted from
 
 - `src\PdfToTxt\Txt` - output txt files
 
 ## Getting Startet
 
-- go to the `main` folder and run the projekt
+- go to the `main` folder and run the project
 
 - _[OPTIONAL]_ : you can change the input and output folder inside the main
 
 ### Javascrpt Code for common.js (first task)
 
-you can find the commen.js on: on : <https://you-zitsu.fandom.com/wiki/User:______/common.js>   -on "_____" needs to be your username
+you can find the common.js on: on : <https://you-zitsu.fandom.com/wiki/User:______/common.js>   -on "_____" needs to be your username
 
 ```javascript
 // function for better image quality. (good for illustrations on mobile device)
@@ -66,7 +68,7 @@ if (window.location.pathname.endsWith("/Illustrations")) {        // Check if th
     if (footer.length != 1) {    //catching an error
         alert("Error with footer!");
     }
-    // delete everything after footer, footer includet
+    // delete everything after footer, footer included
     var footerElement = footer[0];
     var sibling = footerElement.nextSibling;
     while (sibling) { 
