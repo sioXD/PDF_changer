@@ -24,9 +24,11 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 - `src\PdfToTxt\Txt` - output txt files
 
-## Getting Startet
+## Getting Started
 
 - go to the `main` folder and run the project
+
+- then just select in the CLI which program should be run
 
 - _[OPTIONAL]_ : you can change the input and output folder inside the main
 
@@ -68,7 +70,7 @@ if (window.location.pathname.endsWith("/Illustrations")) {        // Check if th
     if (footer.length != 1) {    //catching an error
         alert("Error with footer!");
     }
-    // delete everything after footer, footer included
+    // delete everything after footer, footer includet
     var footerElement = footer[0];
     var sibling = footerElement.nextSibling;
     while (sibling) { 
