@@ -59,8 +59,8 @@ public class PdfToTxt {
 
 
                     //make Introduction
-                    String version = null; //TODO Get the version of the audio book for Example 1/3/4.5/9/11.5/...
-                    String intro = " Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite Volume" + version + ", written by Seigo Kinagasa. Art by Tomo Sessionsaku. Audio by Pixco.";
+                    String version = fileName.replaceAll(".*Vol\\.\\s*(\\d+(\\.\\d+)?).*", "$1"); 
+                    String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite Volume " + version + ", written by Seigo Kinagasa. Art by Tomo Sessionsaku. Audio by Pixco.";
                     fullText.append(processText(intro));
                     
                     // Durchlaufe alle Seiten der PDF

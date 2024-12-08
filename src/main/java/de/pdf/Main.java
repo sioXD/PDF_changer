@@ -36,7 +36,7 @@ public class Main {
                                         new File("src/main/resources/IllustrationChanger/Cropped_Files"));
 
                 }else if (decision == 2) {
-                    System.out.println("\u001b[32m" + "1 selected: starting PdfToTxt\n" + "\u001b[0m");
+                    System.out.println("\u001b[32m" + "2 selected: starting PdfToTxt\n" + "\u001b[0m");
                     PdfToTxt PTT = new PdfToTxt();
                     PTT.ToTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
