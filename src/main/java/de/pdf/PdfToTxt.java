@@ -40,12 +40,23 @@ public class PdfToTxt {
                     StringBuilder fullText = new StringBuilder();
                     PDDocumentOutline outline =  document.getDocumentCatalog().getDocumentOutline();
 
+                    //verarbeitung von pdf zu txt
                     String fileName = file.getName();
                     fileName = fileName.replaceAll("\\.pdf$", ".txt");
                     File outputFile = new File(outputDir, fileName);
 
+                    //console output
+                    String year = fileName.matches(".*\\bYear\\s*\\d+.*") ? fileName.replaceAll(".*\\b(Year\\s*\\d+).*", "$1") : ""; // gets used later for the intro too
+                    String year_console = year != "" ? year + " " : "" ; // if year is "", then same, else: year + " "
+                    String version = fileName.replaceAll(".*Vol\\.\\s*(\\d+(\\.\\d+)?).*", "$1"); 
+                    System.out.print(count + "/" + files.length); // show count
+                    System.out.print(" ~~~ (" + year_console + "Volume " + version + ")"); // Namen der Dateien
+
+
+
+
                     //custom starting point
-                    if (getBookmark(outline) == null) {throw new Exception( "\u001b[31;1m" + "keinen Startpunkt gefunden" + "\u001B[0m");}
+                    if (getBookmark(outline) == null) {throw new Exception("\u001B[31m" + "keinen Startpunkt gefunden" + "\u001B[0m");}
                     PDPage destinationPage = getBookmark(outline).findDestinationPage(document);
                     int pageNumber = document.getPages().indexOf(destinationPage);
 
@@ -59,8 +70,7 @@ public class PdfToTxt {
 
 
                     //make Introduction
-                    String version = fileName.replaceAll(".*Vol\\.\\s*(\\d+(\\.\\d+)?).*", "$1"); 
-                    String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite Volume " + version + ", written by Seigo Kinagasa. Art by Tomo Sessionsaku. Audio by Pixco.";
+                    String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite " + year + "Volume " + version + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco.";
                     fullText.append(processText(intro));
                     
                     // Durchlaufe alle Seiten der PDF
@@ -92,12 +102,11 @@ public class PdfToTxt {
                         writer.write(fullText.toString());
                     }
 
-                    System.out.print(count + "/" + files.length);
 
-                    performFinalScan(outputFile);
+                    performFinalScan(outputFile); //Scan for errors
 
                 } catch (Exception e) {
-                    System.err.println("Fehler beim Verarbeiten der PDF-Datei: " + e);
+                    System.err.println(" --- " + "\u001b[31;1m" +"Fehler beim Verarbeiten der PDF-Datei: " + "\u001B[0m" + e);
                 }
 
             }//EOfor
@@ -129,6 +138,12 @@ public class PdfToTxt {
             .replace("★", "")
             .replace("☆", "")
             .replace("…", "...")
+            .replace("¾", "...") //editor mistake in volume 3
+            .replace("°C", "Celsius")
+            .replace("×", "*")
+            .replace("÷", "/")
+            .replace("•", "/")
+            .replace("\t", " ")
             .replace("ßß", "\n")
 
             // if too many: � --> problem might be ß
@@ -147,7 +162,7 @@ public class PdfToTxt {
             getBookmark(current);
             current = current.getNextSibling();
         }
-        return null;
+        return null; 
     }
 
     //find Bookmarks end
@@ -234,6 +249,7 @@ public class PdfToTxt {
             int invalidCharCount = 0; //�
             int controlCharCount = 0; //other
     
+            // Scan for invalid characters and control characters
             for (char c : fileContent.toCharArray()) {
                 if (c == '�') {
                     invalidCharCount++;
@@ -241,8 +257,29 @@ public class PdfToTxt {
                     controlCharCount++;
                 }
             }
-    
-            if (invalidCharCount > 0 || controlCharCount > 0) {
+
+            // Scan for separated words
+            String regex_subchapter = "\\d\\.\\d\\n";
+            String regex_error = "\\d\\.\\d\\n[^\\s]{1,2}\\s";
+
+            Pattern p = Pattern.compile(regex_subchapter);
+            Pattern pe = Pattern.compile(regex_error);
+            Matcher m = p.matcher(fileContent);
+            Matcher me = pe.matcher(fileContent);
+
+            int error_count = 0;
+            int subchapter_count = 0;
+            while (m.find()) {
+                subchapter_count += 1;
+            }while (me.find()) {
+                error_count += 1;
+            }
+
+            float error_rate = (float) error_count / subchapter_count * 100;
+            boolean failed_detection = (subchapter_count==0 && error_count==0) ? true : false;
+
+            // Print error message if issues were detected
+            if (invalidCharCount > 0 || controlCharCount > 0 || error_count >= subchapter_count-5) {
                 System.err.println(ANSI_RED_BRIGHT + " --- Final scan detected issues:" + ANSI_RESET);
                 if (invalidCharCount > 0) {
                     System.err.println(ANSI_RED + "  -- Detected " + ANSI_RESET + invalidCharCount +  ANSI_RED + " occurrences of the invalid character '�'." + ANSI_RESET);
@@ -250,13 +287,19 @@ public class PdfToTxt {
                 if (controlCharCount > 0) {
                     System.err.println(ANSI_RED + "  -- Detected " + ANSI_RESET + controlCharCount + ANSI_RED + " control characters that may indicate encoding issues." + ANSI_RESET);
                 }
+                if (failed_detection) {
+                    System.err.println(ANSI_RED + "  -- Detected " + ANSI_RESET + "no subchapters. " + ANSI_RED + "Please check the file manually." + ANSI_RESET);
+                } else if (error_count >= subchapter_count-5) {
+                    System.err.println(ANSI_RED + "  -- Detected: " + ANSI_RESET + error_rate + "%" + ANSI_RED + " of the subchapter beginnings are separated" + ANSI_RESET);
+                }
+
                 throw new Exception("Issues detected during the final scan. Please review the output file.\n");
             }
     
-            System.out.println(" --- Final scan completed. No Errors Found.");
+            System.out.println(" --- Final scan completed: No Errors Found.");
     
         } catch (Exception e) {
-            System.err.println(ANSI_RED + "  -- Final scan error: " + e.getMessage() + ANSI_RESET);
+            System.err.println();
         }
     }
 

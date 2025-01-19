@@ -21,11 +21,11 @@ public class Main {
             System.out.println("2: PdfToTxt");
             System.out.println();
 
-            Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too)
+            Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too) //??? and it still doesn't work
 
             try {
-                decision = s.nextInt();    
-                
+                decision = s.nextInt(); 
+                   
                 if (decision == 0){
                     System.out.println("\u001b[32m" + "0 selected: quit" + "\u001b[0m");
                     System.exit(0);
@@ -40,7 +40,6 @@ public class Main {
                     PdfToTxt PTT = new PdfToTxt();
                     PTT.ToTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
-
                 }else{
                     throw new Exception("wrong number entered");
                 }
@@ -65,7 +64,7 @@ public class Main {
             }
         }
 
-        System.out.println("\nFinished! :)");
+        System.out.println("\u001b[32m" + "\nFinished! :)" + "\u001b[0m");
 
     }//EOF
 }//EOC
