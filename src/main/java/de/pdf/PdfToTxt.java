@@ -18,7 +18,9 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlin
 
 public class PdfToTxt {
 
-    public void ToTxt(File inputDir, File outputDir)throws Exception{
+    private static int removedFooters = 0;
+
+    public void toTxt(File inputDir, File outputDir)throws Exception{
 
         if (!outputDir.exists()) {
             outputDir.mkdirs();  // create dir, if not exists
@@ -40,7 +42,7 @@ public class PdfToTxt {
                     StringBuilder fullText = new StringBuilder();
                     PDDocumentOutline outline =  document.getDocumentCatalog().getDocumentOutline();
 
-                    //verarbeitung von pdf zu txt
+                    //processing pdf to txt
                     String fileName = file.getName();
                     fileName = fileName.replaceAll("\\.pdf$", ".txt");
                     File outputFile = new File(outputDir, fileName);
@@ -48,15 +50,16 @@ public class PdfToTxt {
                     //console output
                     String year = fileName.matches(".*\\bYear\\s*\\d+.*") ? fileName.replaceAll(".*\\b(Year\\s*\\d+).*", "$1") : ""; // gets used later for the intro too
                     String year_console = year != "" ? year + " " : "" ; // if year is "", then same, else: year + " "
+                    year = year + " "; // I hate regex to much for changing the line over this
                     String version = fileName.replaceAll(".*Vol\\.\\s*(\\d+(\\.\\d+)?).*", "$1"); 
                     System.out.print(count + "/" + files.length); // show count
-                    System.out.print(" ~~~ (" + year_console + "Volume " + version + ")"); // Namen der Dateien
+                    System.out.print(" ~~~ (" + year_console + "Volume " + version + ")"); // Names of the files
 
 
 
 
                     //custom starting point
-                    if (getBookmark(outline) == null) {throw new Exception("\u001B[31m" + "keinen Startpunkt gefunden" + "\u001B[0m");}
+                    if (getBookmark(outline) == null) {throw new Exception("\u001B[31m" + "no starting point found" + "\u001B[0m");}
                     PDPage destinationPage = getBookmark(outline).findDestinationPage(document);
                     int pageNumber = document.getPages().indexOf(destinationPage);
 
@@ -73,7 +76,7 @@ public class PdfToTxt {
                     String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite " + year + "Volume " + version + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco.";
                     fullText.append(processText(intro));
                     
-                    // Durchlaufe alle Seiten der PDF
+                    // Go through all sides of the PDF
                     for (int page = pageNumber; page < pageNumberEnd; page++) { 
                         pdfStripper.setStartPage(page + 1);
                         pdfStripper.setEndPage(page + 1);
@@ -81,7 +84,7 @@ public class PdfToTxt {
                         String text = pdfStripper.getText(document)/* .trim()*/;
                         text = removeLinesWithLinks(text);
 
-                        // Prüfe, ob die Seite leer ist oder nur aus Bildern besteht
+                        // Check whether the page is blank or only consists of images
                         if (text.isEmpty()) {
                             fullText.append("\nPlease view the Illustration.\n");
                         } else {
@@ -89,7 +92,7 @@ public class PdfToTxt {
                         }
                     }
 
-                    //remove all emty lines that where createt
+                    //remove all empty lines that where created
                     Pattern p = Pattern.compile("(?m)^[\\s]*\n");
                     Matcher m = p.matcher(fullText);
                     String cleanedText = m.replaceAll("");
@@ -97,7 +100,7 @@ public class PdfToTxt {
                     fullText.append(cleanedText);
 
 
-                    // Schreibe den bearbeiteten Text in die Ausgabe-Datei
+                    // Write the edited text to the output file
                     try (FileWriter writer = new FileWriter(outputFile)) {
                         writer.write(fullText.toString());
                     }
@@ -106,18 +109,18 @@ public class PdfToTxt {
                     performFinalScan(outputFile); //Scan for errors
 
                 } catch (Exception e) {
-                    System.err.println(" --- " + "\u001b[31;1m" +"Fehler beim Verarbeiten der PDF-Datei: " + "\u001B[0m" + e);
+                    System.err.println(" --- " + "\u001b[31;1m" +"Error processing PDF file: " + "\u001B[0m" + e);
                 }
 
-            }//EOfor
+            }//EO-for
         }//OFif
 
     }//EOF
 
-    // Funktion zur Textverarbeitung
+    // Function for text processing
     private static String processText(String text) {
 
-        String noLineBreaks = text.replace("\r", "").replace("\n", "");// Entferne alle ursprünglichen Zeilenumbrüche
+        String noLineBreaks = text.replace("\r", "").replace("\n", "");// Remove any original line breaks
         
         //Header gets better
         noLineBreaks = combineHeader(noLineBreaks);
@@ -148,8 +151,8 @@ public class PdfToTxt {
 
             // if too many: � --> problem might be ß
   
-            .replaceAll("[.?!] \\s*", "$0\n") //.|?|! mit Leerzeichen, wird durch \n ersetzt
-            .replaceAll("[.?!]\"\\s*", "$0\n"); //.|?|! mit ", wird durch \n ersetzt
+            .replaceAll("[.?!] \\s*", "$0\n") //.|?|! with spaces, is replaced by \n
+            .replaceAll("[.?!]\"\\s*", "$0\n"); //.|?|! with ", is replaced by \n
         }
 
     //find Bookmarks start
@@ -190,21 +193,21 @@ public class PdfToTxt {
     //Fix Headers
     private static String combineHeader(String text) {
         StringBuilder result = new StringBuilder();
-        String[] fragments = text.split("ßß"); // Text an "ßß" aufteilen 
-    
-        StringBuilder headerBuffer = new StringBuilder(); // Buffer für Header-Zusammenführung
+        String[] fragments = text.split("ßß"); // Split text to "ßß". 
+
+        StringBuilder headerBuffer = new StringBuilder(); // buffer for the header merge
         int countHead = 0;
     
         for (String fragment : fragments) {
             fragment = fragment.trim();
             //System.out.println(fragment);
     
-            if (fragment.startsWith("ß")) { // Fragment gehört zum Header
+            if (fragment.startsWith("ß")) { // fragment is part of header
                 if (countHead == 0){
-                    headerBuffer.append("ß" + fragment); //um am anfang ein \n zu haben
+                    headerBuffer.append("ß" + fragment); //make it so that \n is at the beginning
                     countHead += 1;
                 }else{
-                    headerBuffer.append(fragment.replaceAll("ß", "")).append(" "); // "ß" entfernen und space hinzufügen
+                    headerBuffer.append(fragment.replaceAll("ß", "")).append(" "); // delete "ß" and add space
                 }
             } else { //  normal Text
                 if (headerBuffer.length() > 0) { 
@@ -214,7 +217,7 @@ public class PdfToTxt {
                 result.append(fragment); // add normal text
             }
         }
-        // cheack for errors
+        // check for errors
         if (headerBuffer.length() > 0) {
             result.append(headerBuffer.toString().trim()).append("ßß");
         }
@@ -225,23 +228,29 @@ public class PdfToTxt {
 
 
         
-    // Funktion, die Zeilen mit "https://" entfernt
+    // removing of the footers with: "https://"
+    // possible Idea: loop through the text -> all numbers in a List/Array (maybe Dictionary, because of the line index) -> check all numbers -> remove all numbers that are not next to each other -> remove the lines with these numbers
     private static String removeLinesWithLinks(String text) {
         StringBuilder result = new StringBuilder();
-        String[] lines = text.split("\n"); // Text in Zeilen aufteilen
+        String[] lines = text.split("\n"); // split text into lines for looping
+        removedFooters = 0; 
         for (String line : lines) {
-            if (!line.contains("https://")) { // Zeilen ignorieren, die "https://" enthalten
+            if (!line.contains("https://")) { // ignore lines with "https://"
                 result.append(line).append("\n");
+            } else {
+                removedFooters++; //for FinalScan
             }
         }
-        return result.toString().trim(); // Ergebnis zurückgeben
+        return result.toString().trim(); 
     }
 
     //final Scan
     private static void performFinalScan(File file) {
         final String ANSI_RED = "\u001B[31m";
         final String ANSI_RED_BRIGHT = "\u001b[31;1m";
-        final String ANSI_RESET = "\u001B[0m";
+        final String ANSI_RESET = "\u001B[0m"; //this too: \e[0m
+        final String ANSI_MAGENTA = "\u001b[35m";    //"\uu001b[34m"; 
+
 
         try {
             String fileContent = new String(java.nio.file.Files.readAllBytes(file.toPath()), java.nio.charset.StandardCharsets.UTF_8);
@@ -279,7 +288,7 @@ public class PdfToTxt {
             boolean failed_detection = (subchapter_count==0 && error_count==0) ? true : false;
 
             // Print error message if issues were detected
-            if (invalidCharCount > 0 || controlCharCount > 0 || error_count >= subchapter_count-5) {
+            if (invalidCharCount > 0 || controlCharCount > 0 || error_count >= subchapter_count-5 || removedFooters == 0) {
                 System.err.println(ANSI_RED_BRIGHT + " --- Final scan detected issues:" + ANSI_RESET);
                 if (invalidCharCount > 0) {
                     System.err.println(ANSI_RED + "  -- Detected " + ANSI_RESET + invalidCharCount +  ANSI_RED + " occurrences of the invalid character '�'." + ANSI_RESET);
@@ -292,6 +301,12 @@ public class PdfToTxt {
                 } else if (error_count >= subchapter_count-5) {
                     System.err.println(ANSI_RED + "  -- Detected: " + ANSI_RESET + error_rate + "%" + ANSI_RED + " of the subchapter beginnings are separated" + ANSI_RESET);
                 }
+                if (removedFooters == 0) {
+                    System.err.println(ANSI_MAGENTA + "  -- Detected: " + removedFooters + " footers removed" + ANSI_RESET);
+                }
+
+                File errorFile = new File(file.getParent(), "error_" + file.getName());
+                file.renameTo(errorFile);
 
                 throw new Exception("Issues detected during the final scan. Please review the output file.\n");
             }

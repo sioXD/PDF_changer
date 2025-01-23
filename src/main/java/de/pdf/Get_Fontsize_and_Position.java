@@ -21,15 +21,15 @@ public class Get_Fontsize_and_Position {
                 protected void writeString(String text, List<TextPosition> textPositions) throws IOException {
                     StringBuilder wordBuilder = new StringBuilder();
                     List<TextPosition> wordPositions = new ArrayList<>();
-                    float lastX = -1; // letzte X-Position
-                    float threshold = 2.5f; // Abstandsschwelle zwischen Zeichen
+                    float lastX = -1; // last X position
+                    float threshold = 2.5f; // Distance threshold between characters
 
                     for (TextPosition textPosition : textPositions) {
                         float currentX = textPosition.getXDirAdj();
                         if (lastX != -1 && (currentX - lastX > threshold)) {
-                            // Neues Wort erkannt, daher ausgeben
+                            // New word recognized, therefore output
                             printWord(wordBuilder.toString(), wordPositions, writer);
-                            wordBuilder.setLength(0); // Wort zurücksetzen
+                            wordBuilder.setLength(0); // Reset word
                             wordPositions.clear();
                         }
                         wordBuilder.append(textPosition.getUnicode());
@@ -37,7 +37,7 @@ public class Get_Fontsize_and_Position {
                         lastX = currentX + textPosition.getWidthDirAdj();
                     }
 
-                    // Letztes Wort ausgeben
+                    // Output last word
                     if (wordBuilder.length() > 0) {
                         printWord(wordBuilder.toString(), wordPositions, writer);
                     }
@@ -45,15 +45,15 @@ public class Get_Fontsize_and_Position {
 
                 private void printWord(String word, List<TextPosition> positions, BufferedWriter writer) throws IOException {
                     if (positions.isEmpty()) return;
-                    float fontSize = positions.get(0).getFontSizeInPt(); // Schriftgröße des ersten Zeichens
-                    float yPosition = positions.get(0).getYDirAdj(); // Y-Position des ersten Zeichens
-                    writer.write("Groesse: " + fontSize + "pt, " + "Y-Position: " + yPosition + " - Wort: " + word);
-                    writer.newLine(); // Zeilenumbruch nach jedem Wort
+                    float fontSize = positions.get(0).getFontSizeInPt(); // Font size of the first character
+                    float yPosition = positions.get(0).getYDirAdj(); // Y position of the first character
+                    writer.write("Size: " + fontSize + "pt, " + "Y-Position: " + yPosition + " - Word: " + word);
+                    writer.newLine(); // Line break after each word
                 }
             };
 
-            pdfStripper.setSortByPosition(true); // Sortiere nach Position
-            pdfStripper.getText(document); // Verarbeite das PDF-Dokument
+            pdfStripper.setSortByPosition(true); // Sort by position
+            pdfStripper.getText(document); // Process the PDF document
         }
     }
 
@@ -62,7 +62,7 @@ public class Get_Fontsize_and_Position {
         File outputFile = new File("output.txt");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
             analyzeFontSizesAndPositions(pdfFile, writer);
-            System.out.println("Der Text wurde erfolgreich in 'output.txt' geschrieben.");
+            System.out.println("The text was successfully written to 'output.txt'.");
         } catch (IOException e) {
             e.printStackTrace();
         }

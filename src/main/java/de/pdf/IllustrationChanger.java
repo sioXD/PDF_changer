@@ -35,7 +35,7 @@ public class IllustrationChanger {
                 try (PDDocument document = Loader.loadPDF(file)) {
                     count += 1;
 
-                    // cropp for each page (its only 1 page (OperaGX-download as PDF))
+                    // crop for each page (its only 1 page (OperaGX-download as PDF))
                     for (PDPage page : document.getPages()) {
 
                         // delete Hyperlinks
@@ -62,7 +62,7 @@ public class IllustrationChanger {
 
                         PDRectangle cropBox = new PDRectangle(
                                 originalBox.getLowerLeftX(),  // same
-                                newUpperRightY - originalBox.getHeight(), // new y (mesured from top)
+                                newUpperRightY - originalBox.getHeight(), // new y (measured from top)
                                 originalBox.getWidth(),       // same
                                 originalBox.getHeight()       // same
                         );
@@ -70,7 +70,7 @@ public class IllustrationChanger {
                         page.setCropBox(cropBox); // crop the pdf
                     }//EO_for
 
-                    //for Accsess
+                    //for Access
                     AccessPermission accessPermissions = new AccessPermission();
                     accessPermissions.setCanModify(false);
                     accessPermissions.setCanExtractContent(true);

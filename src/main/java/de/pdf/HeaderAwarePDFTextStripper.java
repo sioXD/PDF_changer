@@ -8,7 +8,7 @@ import java.util.List;
 
 class HeaderAwarePDFTextStripper extends PDFTextStripper {
 
-    private final List<Float> headerFontSizes; // Bekannte Schriftgrößen für Überschriften
+    private final List<Float> headerFontSizes; // Known font sizes for headings
 
     public HeaderAwarePDFTextStripper(List<Float> headerFontSizes) throws IOException {
         super();
@@ -21,11 +21,11 @@ class HeaderAwarePDFTextStripper extends PDFTextStripper {
             float fontSize = textPositions.get(0).getFontSizeInPt();
 
             if (headerFontSizes.contains(fontSize)) {
-                // Überschrift erkannt: Zeilenumbruch explizit einfügen
+                // Heading detected: Insert line break explicitly
                 //System.out.println("Header detected: " + text);
-                super.writeString("ß" + text.trim() + "ßß"); // Doppelte Zeilenumbrüche für Header
+                super.writeString("ß" + text.trim() + "ßß"); // Double line breaks for headers
             } else {
-                // Normaler Text
+                // Normal text
                 super.writeString(text.trim() + " ");
             }
         }

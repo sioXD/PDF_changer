@@ -23,6 +23,9 @@ public class Main {
 
             Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too) //??? and it still doesn't work
 
+            //! TOADD: check if the page number still exists
+            //TODO: Footer with page number removed
+
             try {
                 decision = s.nextInt(); 
                    
@@ -38,7 +41,7 @@ public class Main {
                 }else if (decision == 2) {
                     System.out.println("\u001b[32m" + "2 selected: starting PdfToTxt\n" + "\u001b[0m");
                     PdfToTxt PTT = new PdfToTxt();
-                    PTT.ToTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
+                    PTT.toTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
                 }else{
                     throw new Exception("wrong number entered");
