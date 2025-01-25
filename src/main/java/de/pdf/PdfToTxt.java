@@ -20,7 +20,7 @@ import org.apache.commons.io.FileUtils;
 
 public class PdfToTxt {
 
-    final Boolean delete_fodler_contens = true;
+    final Boolean delete_folder_contents = true;
     private static int removedFooters = 0;
 
     public void toTxt(File inputDir, File outputDir)throws Exception{
@@ -28,7 +28,7 @@ public class PdfToTxt {
         if (!outputDir.exists()) {
             outputDir.mkdirs();  // create dir, if not exists
         }
-        if (delete_fodler_contens) {
+        if (delete_folder_contents) {
             FileUtils.cleanDirectory(outputDir); // delete all files in the folder
         }
 
@@ -241,15 +241,16 @@ public class PdfToTxt {
     // possible Idea: loop through the text -> all numbers in a List/Array (maybe Dictionary, because of the line index) -> check all numbers -> remove all numbers that are not next to each other -> remove the lines with these numbers
 
     
- // Function that removes lines with "mp4directs.com"
+    // Function that removes lines with "mp4directs.com"
     private static String removeLinesWithLinks(String text) {
         StringBuilder result = new StringBuilder();
         String[] lines = text.split("\n"); // Split text into lines
-        int removedFooters = 0;
+        removedFooters = 0;
         for (String line : lines) {
-            if (!line.contains("mp4directs.com")) { // Ignore lines that contain "mp4directs.com" 
+            if (line.contains("mp4directs.com")) { // Ignore lines that contain "mp4directs.com" 
+                removedFooters++; //for FinalScan
+            }else{
                 result.append(line).append("\n");
-                removedFooters += 1; //for FinalScan
             }
         }
         return result.toString().trim(); // Return result
@@ -326,7 +327,7 @@ public class PdfToTxt {
                     System.err.println(ANSI_RED + "  -- Detected: " + ANSI_RESET + error_rate + "%" + ANSI_RED + " of the subchapter beginnings are separated" + ANSI_RESET);
                 }
                 if (removedFooters == 0) {
-                    System.err.println(ANSI_MAGENTA + "  -- Detected: " + removedFooters + " footers removed" + ANSI_RESET);
+                    System.err.println(ANSI_RED + "  -- Detected: " + ANSI_MAGENTA + removedFooters + " footers removed" + ANSI_RESET);
                 }
 
                 File errorFile = new File(file.getParent(), "error_" + file.getName());
