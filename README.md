@@ -38,8 +38,9 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 ### Javascript Code for common.js (first task)
 
-you can find the common.js on: on : <https://you-zitsu.fandom.com/wiki/User:%USERNAME%/common.js>  
- - <b>%USERNAME%</b> needs to be replaced with your username
+you can find the common.js on: on : <https://you-zitsu.fandom.com/wiki/User:%USERNAME%/common.js>
+
+- **%USERNAME%** needs to be replaced with your username
 
 then add this code inside field on the website:
 
