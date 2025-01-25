@@ -1,7 +1,5 @@
 # PDF_changer
 
-<em>now in Maven</em>
-
 This is a Software for two things:
 
 first: cropping, renaming and deleting link for PDFs, made in Java.
@@ -10,7 +8,7 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 ## Folder Structure
 
-`src\IllustrationChanger` - Main Folder for the first task
+`src\IllustrationChanger` - Main folder for the first task
 
 - `src\IllustrationChanger\PDF_Files` - all original PDF files (not cropped)
 
@@ -18,7 +16,7 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 ---
 
-`src\PdfToTxt` - cropped Files
+`src\PdfToTxt` - Main folder for the second Task
 
 - `src\PdfToTxt\Pdf` - PDF files where the text should be extracted from
 
@@ -32,13 +30,20 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 - _[OPTIONAL]_ : you can change the input and output folder inside the main
 
-### Javascrpt Code for common.js (first task)
+## TODO
 
-you can find the common.js on: on : <https://you-zitsu.fandom.com/wiki/User:______/common.js>   -on "_____" needs to be your username
+- better input handling (main)
+
+- better footer removing (ptt)
+
+### Javascript Code for common.js (first task)
+
+you can find the common.js on: on : <https://you-zitsu.fandom.com/wiki/User:%USERNAME%/common.js>  
+ - <b>%USERNAME%</b> needs to be replaced with your username
+
+then add this code inside field on the website:
 
 ```javascript
-// function for better image quality. (good for illustrations on mobile device)
-
 // select images with the class "lazyload"
 var lazyImages = document.querySelectorAll('img.lazyloaded, img.lazyload');
 // loop through them

@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -17,13 +18,19 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 
+
 public class IllustrationChanger {
 
-    public void IllustrationChange(File inputDir, File outputDir){
+    final Boolean delete_folder_contents = true;
+
+    public void IllustrationChange(File inputDir, File outputDir)throws Exception{
 
         // dir where PDFs end
         if (!outputDir.exists()) {
             outputDir.mkdirs();  // create dir, if not exists
+        }
+        if (delete_folder_contents) {
+            FileUtils.cleanDirectory(outputDir); // delete all files in the folder
         }
         
         File[] files = inputDir.listFiles((d, name) -> name.toLowerCase().endsWith(".pdf"));
