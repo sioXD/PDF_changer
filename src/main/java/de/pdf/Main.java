@@ -23,7 +23,6 @@ public class Main {
 
             Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too) //??? and it still doesn't work
 
-            //! TOADD: check if the page number still exists
             //TODO: Footer with page number removed
 
             try {

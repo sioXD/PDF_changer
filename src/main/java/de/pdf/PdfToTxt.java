@@ -16,14 +16,20 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocume
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineNode;
 
+import org.apache.commons.io.FileUtils;
+
 public class PdfToTxt {
 
+    final Boolean delete_fodler_contens = true;
     private static int removedFooters = 0;
 
     public void toTxt(File inputDir, File outputDir)throws Exception{
 
         if (!outputDir.exists()) {
             outputDir.mkdirs();  // create dir, if not exists
+        }
+        if (delete_fodler_contens) {
+            FileUtils.cleanDirectory(outputDir); // delete all files in the folder
         }
 
         File[] files = inputDir.listFiles((d, name) -> name.toLowerCase().endsWith(".pdf"));
@@ -118,7 +124,7 @@ public class PdfToTxt {
     }//EOF
 
     // Function for text processing
-    private static String processText(String text) {
+    private static String processText(String text) { 
 
         String noLineBreaks = text.replace("\r", "").replace("\n", "");// Remove any original line breaks
         
@@ -227,22 +233,40 @@ public class PdfToTxt {
     
 
 
+
+
+    //? in development (didn't work beforehand 😔)
+
         
-    // removing of the footers with: "https://"
     // possible Idea: loop through the text -> all numbers in a List/Array (maybe Dictionary, because of the line index) -> check all numbers -> remove all numbers that are not next to each other -> remove the lines with these numbers
+
+    
+ // Function that removes lines with "mp4directs.com"
     private static String removeLinesWithLinks(String text) {
         StringBuilder result = new StringBuilder();
-        String[] lines = text.split("\n"); // split text into lines for looping
-        removedFooters = 0; 
+        String[] lines = text.split("\n"); // Split text into lines
+        int removedFooters = 0;
         for (String line : lines) {
-            if (!line.contains("https://")) { // ignore lines with "https://"
+            if (!line.contains("mp4directs.com")) { // Ignore lines that contain "mp4directs.com" 
                 result.append(line).append("\n");
-            } else {
-                removedFooters++; //for FinalScan
+                removedFooters += 1; //for FinalScan
             }
         }
-        return result.toString().trim(); 
+        return result.toString().trim(); // Return result
     }
+
+
+    //? in development
+
+
+
+
+
+
+
+
+
+    
 
     //final Scan
     private static void performFinalScan(File file) {
