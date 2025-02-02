@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
@@ -87,14 +88,16 @@ public class PdfToTxt {
                         pdfStripper.setStartPage(page + 1);
                         pdfStripper.setEndPage(page + 1);
 
-                        String text = pdfStripper.getText(document)/* .trim()*/;
-                        text = removeLinesWithLinks(text);
+                        String text = pdfStripper.getText(document);
+                        text = removeLinesWithLinks(text); //! this is the String with the original line breaks
 
                         // Check whether the page is blank or only consists of images
                         if (text.isEmpty()) {
                             fullText.append("\nPlease view the Illustration.\n");
                         } else {
-                            fullText.append(processText(text));
+                            String processedText = processText(text); //first process text
+                            String processedLongLines = processLongLines(processedText, text); //then long lines
+                            fullText.append(processedLongLines); //then to StringBuilder
                         }
                     }
 
@@ -159,6 +162,67 @@ public class PdfToTxt {
   
             .replaceAll("[.?!] \\s*", "$0\n") //.|?|! with spaces, is replaced by \n
             .replaceAll("[.?!]\"\\s*", "$0\n"); //.|?|! with ", is replaced by \n
+        }
+
+        private static String applyReplacements(String text) {
+            // Normalize diacritics
+            String cleaned = Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+            // Apply character replacements
+            return cleaned
+                .replace("No.", "Number")
+                .replace("”", "\"")
+                .replace("“", "\"")
+                .replace("—", "-")
+                .replace("–", "-")
+                .replace("‘", "'")
+                .replace("’", "'")
+                .replace("★", "")
+                .replace("☆", "")
+                .replace("…", "...")
+                .replace("¾", "...")
+                .replace("°C", "Celsius")
+                .replace("×", "*")
+                .replace("÷", "/")
+                .replace("•", "/")
+                .replace("\t", " ")
+                .replace("ßß", "\n");
+        }
+        
+        // Updated processLongLines method
+        private static String processLongLines(String processedText, String originalText) {
+            // Detect lines longer than 200 characters
+            final Pattern LONG_LINE_PATTERN = Pattern.compile("^.{200,}$", Pattern.MULTILINE);
+            
+            List<String> originalLines = Arrays.stream(originalText.split("\n"))
+                    .map(line -> applyReplacements(line).trim()) // Apply replacements to original lines
+                    .filter(line -> !line.isEmpty())
+                    .collect(Collectors.toList());
+        
+            return Arrays.stream(processedText.split("\n"))
+                    .map(processedLine -> {
+                        if (LONG_LINE_PATTERN.matcher(processedLine).matches()) {
+                            String target = applyReplacements(processedLine).trim();
+                            int targetLen = target.length();
+                            int n = originalLines.size();
+                            
+                            for (int start = 0; start < n; start++) {
+                                StringBuilder sb = new StringBuilder();
+                                for (int end = start; end < n; end++) {
+                                    String part = originalLines.get(end);
+                                    sb.append(part).append(" "); // Add space between lines
+                                    String concatenated = sb.toString().trim();
+                                    
+                                    if (concatenated.equals(target)) {
+                                        // Return original formatted lines (join with newlines)
+                                        return String.join("\n", originalLines.subList(start, end + 1));
+                                    }
+                                    if (concatenated.length() > targetLen) break;
+                                }
+                            }
+                        }
+                        return processedLine;
+                    })
+                    .collect(Collectors.joining("\n"));
         }
 
     //find Bookmarks start
@@ -232,16 +296,8 @@ public class PdfToTxt {
     }
     
 
-
-
-
-    //? in development (didn't work beforehand 😔)
-
-        
-    // possible Idea: loop through the text -> all numbers in a List/Array (maybe Dictionary, because of the line index) -> check all numbers -> remove all numbers that are not next to each other -> remove the lines with these numbers
-
     
-    // Function that removes lines with "mp4directs.com"
+    // Function that removes lines with "mp4directs.com"                 //! maybe just cut the top and bottom
     private static String removeLinesWithLinks(String text) {
         StringBuilder result = new StringBuilder();
         String[] lines = text.split("\n"); // Split text into lines
@@ -257,17 +313,7 @@ public class PdfToTxt {
     }
 
 
-    //? in development
-
-
-
-
-
-
-
-
-
-    
+   
 
     //final Scan
     private static void performFinalScan(File file) {

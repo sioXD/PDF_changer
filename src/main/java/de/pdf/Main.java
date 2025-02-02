@@ -19,6 +19,7 @@ public class Main {
             System.out.println("0: quit");
             System.out.println("1: IllustrationChanger");
             System.out.println("2: PdfToTxt");
+            System.out.println("3: IllustrationExtractor");
             System.out.println();
 
             Scanner s = new Scanner(System.in); // must be outside of try, so catch can see it -(yes, I hate it too) //??? and it still doesn't work
@@ -40,6 +41,12 @@ public class Main {
                     PdfToTxt PTT = new PdfToTxt();
                     PTT.toTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
+                /* }else if (decision == 3) {
+                    System.out.println("\u001b[32m" + "3 selected: starting IllustrationExtractor\n" + "\u001b[0m");
+                    IllustrationExtractor IE = new IllustrationExtractor();
+                    IE.onlyPic(new File("src/main/resources/IllustrationExtractor/originalPDF"), 
+                                        new File("src/main/resources/IllustrationExtractor/Illustration")); */
+                    
                 }else{
                     throw new Exception("wrong number entered");
                 }
