@@ -4,8 +4,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -47,20 +51,42 @@ public class PdfToTxt {
 
                     HeaderAwarePDFTextStripper pdfStripper = new HeaderAwarePDFTextStripper(headerFontSizes); //extends PDFTextStripper  bla bla ...
                     StringBuilder fullText = new StringBuilder();
+                    StringBuilder originalText = new StringBuilder();
                     PDDocumentOutline outline =  document.getDocumentCatalog().getDocumentOutline();
 
                     //processing pdf to txt
                     String fileName = file.getName();
-                    fileName = fileName.replaceAll("\\.pdf$", ".txt");
+                    fileName = fileName.replaceAll(".pdf", ".txt");
                     File outputFile = new File(outputDir, fileName);
 
                     //console output
-                    String year = fileName.matches(".*\\bYear\\s*\\d+.*") ? fileName.replaceAll(".*\\b(Year\\s*\\d+).*", "$1") : ""; // gets used later for the intro too
-                    String year_console = year != "" ? year + " " : "" ; // if year is "", then same, else: year + " "
-                    year = year + " "; // I hate regex to much for changing the line over this
-                    String version = fileName.replaceAll(".*Vol\\.\\s*(\\d+(\\.\\d+)?).*", "$1"); 
+                    String fileVolume = fileName.replaceAll("Vol.", "Volume"); 
+                    fileVolume = fileVolume.replaceAll(".txt", "");
+                    String fileVolume_console = fileVolume; // for console output 
+
+                    String[] parts;
+                    String beforeParts = fileVolume;
+                    String afterParts = "";
+
+                    try {
+                        if (fileVolume_console.contains("Year")) {
+                            parts = fileVolume_console.split("(?=\\bYear\\b)", 2); // split before Year
+                            beforeParts = parts[0].trim(); // everything before "Year"
+                            afterParts = parts[1].trim();  // everything after "Year"
+                        }else{
+                            parts = fileVolume_console.split("(?=\\bVolume\\b)", 2); // split before Volume
+                            beforeParts = parts[0].trim(); // everything before "Volume"
+                            afterParts = parts[1].trim();  // everything after "Volume"
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        int midIndex = fileVolume_console.length() / 2; // split in the middle
+                        beforeParts = fileVolume.substring(0, midIndex).trim(); 
+                        afterParts = fileVolume_console.substring(midIndex).trim();
+                    }
+
+
                     System.out.print(count + "/" + files.length); // show count
-                    System.out.print(" ~~~ (" + year_console + "Volume " + version + ")"); // Names of the files
+                    System.out.print(" ~~~ (" + afterParts + ")"); // Names of the files 
 
 
 
@@ -80,7 +106,7 @@ public class PdfToTxt {
 
 
                     //make Introduction
-                    String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. Classroom of the Elite's illustrations will be announced, so please listen for the narrator to say, please view the illustration. Classroom of the Elite " + year + "Volume " + version + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco.";
+                    String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. " + beforeParts + " Illustrations will be announced, so please listen for the narrator to say, please view the illustration. " + fileVolume + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco."; //Author and Illustrator needs to be made dynamic
                     fullText.append(processText(intro));
                     
                     // Go through all sides of the PDF
@@ -89,33 +115,35 @@ public class PdfToTxt {
                         pdfStripper.setEndPage(page + 1);
 
                         String text = pdfStripper.getText(document);
-                        text = removeLinesWithLinks(text); //! this is the String with the original line breaks
+                        text = removeLinesWithLinks(text); 
 
                         // Check whether the page is blank or only consists of images
                         if (text.isEmpty()) {
                             fullText.append("\nPlease view the Illustration.\n");
                         } else {
-                            String processedText = processText(text); //first process text
-                            String processedLongLines = processLongLines(processedText, text); //then long lines
-                            fullText.append(processedLongLines); //then to StringBuilder
+                            fullText.append(processText(text)).append(" "); //StringBuilder with processed text
+                            originalText.append(text).append("\n"); //StringBuilder with original text
                         }
                     }
 
-                    //remove all empty lines that where created
-                    Pattern p = Pattern.compile("(?m)^[\\s]*\n");
-                    Matcher m = p.matcher(fullText);
-                    String cleanedText = m.replaceAll("");
-                    fullText.setLength(0);
-                    fullText.append(cleanedText);
+                    //? Here are too long lines processed
+                    String processedLongLines = processLongLines(   //check for long lines
+                        fullText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", ""), 
+                        originalText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "")
+                    ); 
 
+
+                    // Final cleanup
+                    String finalCleaned = processedLongLines.replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "");
 
                     // Write the edited text to the output file
                     try (FileWriter writer = new FileWriter(outputFile)) {
-                        writer.write(fullText.toString());
+                        writer.write(finalCleaned);
                     }
 
 
                     performFinalScan(outputFile); //Scan for errors
+
 
                 } catch (Exception e) {
                     System.err.println(" --- " + "\u001b[31;1m" +"Error processing PDF file: " + "\u001B[0m" + e);
@@ -124,6 +152,9 @@ public class PdfToTxt {
             }//EO-for
         }//OFif
 
+        //! Important
+        System.out.println("for testing if something is double use: ^(.*)(?:\r?\n\1)+$ with $1");
+
     }//EOF
 
     // Function for text processing
@@ -131,99 +162,122 @@ public class PdfToTxt {
 
         String noLineBreaks = text.replace("\r", "").replace("\n", "");// Remove any original line breaks
         
-        //Header gets better
-        noLineBreaks = combineHeader(noLineBreaks);
-
-        // Remove diacritical marks, accents, etc.
-        String cleanedText = Normalizer.normalize(noLineBreaks, Normalizer.Form.NFD); 
-        cleanedText = cleanedText.replaceAll("\\p{M}", "");
-
+        String cleanedText = normalizeText(noLineBreaks); // Normalize and process individual words
 
         return cleanedText
-            .replace("No.", "Number") //No. 11 --> Number 11
-            .replace("”", "\"") 
-            .replace("“", "\"") 
-            .replace("—", "-") 
-            .replace("–", "-") 
-            .replace("‘", "'") 
-            .replace("’", "'") 
-            .replace("★", "")
-            .replace("☆", "")
-            .replace("…", "...")
-            .replace("¾", "...") //editor mistake in volume 3
-            .replace("°C", "Celsius")
-            .replace("×", "*")
-            .replace("÷", "/")
-            .replace("•", "/")
-            .replace("\t", " ")
-            .replace("ßß", "\n")
-
-            // if too many: � --> problem might be ß
-  
             .replaceAll("[.?!] \\s*", "$0\n") //.|?|! with spaces, is replaced by \n
             .replaceAll("[.?!]\"\\s*", "$0\n"); //.|?|! with ", is replaced by \n
+                                                                  
+            //! maybe add \n after ";"
+            // if too many: � --> problem might be ß
         }
 
-        private static String applyReplacements(String text) {
-            // Normalize diacritics
-            String cleaned = Normalizer.normalize(text, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-            // Apply character replacements
-            return cleaned
-                .replace("No.", "Number")
-                .replace("”", "\"")
-                .replace("“", "\"")
-                .replace("—", "-")
-                .replace("–", "-")
-                .replace("‘", "'")
-                .replace("’", "'")
-                .replace("★", "")
-                .replace("☆", "")
-                .replace("…", "...")
-                .replace("¾", "...")
-                .replace("°C", "Celsius")
-                .replace("×", "*")
-                .replace("÷", "/")
-                .replace("•", "/")
-                .replace("\t", " ")
-                .replace("ßß", "\n");
-        }
-        
-        // Updated processLongLines method
-        private static String processLongLines(String processedText, String originalText) {
-            // Detect lines longer than 200 characters
-            final Pattern LONG_LINE_PATTERN = Pattern.compile("^.{200,}$", Pattern.MULTILINE);
-            
-            List<String> originalLines = Arrays.stream(originalText.split("\n"))
-                    .map(line -> applyReplacements(line).trim()) // Apply replacements to original lines
-                    .filter(line -> !line.isEmpty())
+
+    // Normalized the text
+    private static String normalizeText(String text) {
+
+        // Header processing for individual words (if needed)
+        text = combineHeader(text); 
+
+         // Remove diacritical marks, accents, etc.
+         String cleanedText = Normalizer.normalize(text, Normalizer.Form.NFD); 
+         cleanedText = cleanedText.replaceAll("\\p{M}", "");
+ 
+        return cleanedText
+             .replace("No.", "Number") //No. 11 --> Number 11
+             .replace("”", "\"") 
+             .replace("“", "\"") 
+             .replace("—", "-") 
+             .replace("–", "-") 
+             .replace("‘", "'") 
+             .replace("’", "'") 
+             .replace("★", "")
+             .replace("☆", "")
+             .replace("…", "...")
+             .replace("¾", "...") //editor mistake in volume 3
+             .replace("°C", "Celsius")
+             .replace("×", "*")
+             .replace("÷", "/")
+             .replace("•", "/")
+             .replace("\t", " ")
+             .replace("ßß", "\n")
+            .trim();
+    }
+
+    // Word-based search
+    private static String processLongLines(String processedText, String originalText) {
+        final int LONG_LINE_THRESHOLD = 250; //^.{250,}$
+        final double MATCH_THRESHOLD = 0.8; // 80% of the words must match
+
+        // Normalize and save original lines with their words
+        List<List<String>> originalWordLines = Arrays.stream(originalText.split("\n"))
+            .map(line -> Arrays.stream(normalizeText(line).split("\\s+"))
+                            .filter(word -> !word.isEmpty())
+                            .collect(Collectors.toList()))
+            .filter(line -> !line.isEmpty())
+            .collect(Collectors.toList());
+
+        AtomicInteger perfectMatches = new AtomicInteger(0);
+        AtomicInteger partialMatches = new AtomicInteger(0);
+        AtomicInteger noMatches = new AtomicInteger(0);
+
+        String result = Arrays.stream(processedText.split("\n"))
+            .map(processedLine -> {
+                if (processedLine.length() < LONG_LINE_THRESHOLD) {
+                    return processedLine;
+                }
+
+                // Extract and normalize words from the processed line
+                List<String> targetWords = Arrays.stream(normalizeText(processedLine).split("\\s+"))
+                    .filter(word -> !word.isEmpty())
                     .collect(Collectors.toList());
-        
-            return Arrays.stream(processedText.split("\n"))
-                    .map(processedLine -> {
-                        if (LONG_LINE_PATTERN.matcher(processedLine).matches()) {
-                            String target = applyReplacements(processedLine).trim();
-                            int targetLen = target.length();
-                            int n = originalLines.size();
-                            
-                            for (int start = 0; start < n; start++) {
-                                StringBuilder sb = new StringBuilder();
-                                for (int end = start; end < n; end++) {
-                                    String part = originalLines.get(end);
-                                    sb.append(part).append(" "); // Add space between lines
-                                    String concatenated = sb.toString().trim();
-                                    
-                                    if (concatenated.equals(target)) {
-                                        // Return original formatted lines (join with newlines)
-                                        return String.join("\n", originalLines.subList(start, end + 1));
-                                    }
-                                    if (concatenated.length() > targetLen) break;
-                                }
-                            }
+
+                // Search original lines for suitable word sequences
+                for (int i = 0; i < originalWordLines.size(); i++) {
+                    List<String> combined = new ArrayList<>();
+                    int matches = 0;
+                    
+                    for (int j = i; j < originalWordLines.size(); j++) {
+                        combined.addAll(originalWordLines.get(j));
+                        
+                        // Check for exact sequence agreement
+                        if (Collections.indexOfSubList(combined, targetWords) != -1) {
+                            perfectMatches.incrementAndGet();
+                            return reconstructOriginalLines(originalWordLines, i, j);
                         }
-                        return processedLine;
-                    })
-                    .collect(Collectors.joining("\n"));
-        }
+                        
+                        //check partial agreement
+                        long wordMatches = combined.stream()
+                            .filter(targetWords::contains)
+                            .count();
+                        
+                        if ((double) wordMatches / targetWords.size() >= MATCH_THRESHOLD) {
+                            partialMatches.incrementAndGet();
+                            return reconstructOriginalLines(originalWordLines, i, j);
+                        }
+                        
+                        if (combined.size() > targetWords.size() * 1.5) break;
+                    }
+                }
+                
+                noMatches.incrementAndGet();
+                return processedLine;
+            })
+            .collect(Collectors.joining("\n"));
+
+        System.out.println();
+        if (perfectMatches.get() != 0) System.out.println("\033[32m"+"    Perfect matches: " + perfectMatches.get()+"\033[0m"); //green
+        if (partialMatches.get() != 0) System.out.println("\033[33m"+"    Partially matches: " + partialMatches.get()+"\033[0m"); //yellow
+        if (noMatches.get() != 0) System.out.println("\033[31m"+"    No matches: " + noMatches.get()+"\033[0m"); //red
+        
+        return result;
+    }
+
+    private static String reconstructOriginalLines(List<List<String>> wordLines, int start, int end) {
+        return wordLines.subList(start, end + 1).stream()
+            .map(lineWords -> String.join(" ", lineWords))
+            .collect(Collectors.joining("\n"));
+    }
 
     //find Bookmarks start
     public PDOutlineItem getBookmark(PDOutlineNode bookmark) throws IOException{
@@ -382,7 +436,7 @@ public class PdfToTxt {
                 throw new Exception("Issues detected during the final scan. Please review the output file.\n");
             }
     
-            System.out.println(" --- Final scan completed: No Errors Found.");
+            System.out.println(" --- Final scan detected no errors.");
     
         } catch (Exception e) {
             System.err.println();
