@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -235,7 +234,6 @@ public class PdfToTxt {
                 // Search original lines for suitable word sequences
                 for (int i = 0; i < originalWordLines.size(); i++) {
                     List<String> combined = new ArrayList<>();
-                    int matches = 0;
                     
                     for (int j = i; j < originalWordLines.size(); j++) {
                         combined.addAll(originalWordLines.get(j));
