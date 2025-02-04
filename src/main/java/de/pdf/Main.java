@@ -27,25 +27,27 @@ public class Main {
             try {
                 decision = s.nextInt(); 
                    
-                if (decision == 0){
+                if (decision == 0){ // quit
                     System.out.println("\u001b[32m" + "0 selected: quit" + "\u001b[0m");
                     System.exit(0);
-                }else if (decision == 1) {
+
+                }else if (decision == 1) { // Fix Illustration
                     System.out.println("\u001b[32m" + "1 selected: starting IllustrationChanger\n" + "\u001b[0m");
                     IllustrationChanger Illu = new IllustrationChanger();
                     Illu.IllustrationChange(new File("src/main/resources/IllustrationChanger/PDF_Files"), 
                                         new File("src/main/resources/IllustrationChanger/Cropped_Files"));
 
-                }else if (decision == 2) {
+                }else if (decision == 2) { // Pdf to Txt
                     System.out.println("\u001b[32m" + "2 selected: starting PdfToTxt\n" + "\u001b[0m");
                     PdfToTxt PTT = new PdfToTxt();
                     PTT.toTxt(new File("src/main/resources/PdfToTxt/Pdf"), 
                           new File("src/main/resources/PdfToTxt/Txt"));
-                /* }else if (decision == 3) {
+
+                }else if (decision == 3) { // extracting Illustrations
                     System.out.println("\u001b[32m" + "3 selected: starting IllustrationExtractor\n" + "\u001b[0m");
                     IllustrationExtractor IE = new IllustrationExtractor();
                     IE.onlyPic(new File("src/main/resources/IllustrationExtractor/originalPDF"), 
-                                        new File("src/main/resources/IllustrationExtractor/Illustration")); */
+                                        new File("src/main/resources/IllustrationExtractor/Illustration")); 
                     
                 }else{
                     throw new Exception("wrong number entered");
