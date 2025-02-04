@@ -105,8 +105,12 @@ public class PdfToTxt {
 
                     //make Introduction
                     String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. " + beforeParts + " Illustrations will be announced, so please listen for the narrator to say, please view the illustration. " + fileVolume + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco."; //Author and Illustrator needs to be made dynamic
-                    fullText.append(processText(intro)).append("\n");
+                    String outro = "That is the end of the story; thank you for listening all the way to the end. If you enjoyed it, please subscribe. It will help grow the channel. I am planning to make more of these types of videos, but my lack of time makes this a challenging approach. Perhaps subscribing would be a big help. Anyways, thanks for watching, and I'll see you next time."; // custom outro
                     
+                    // append the intro to the StringBuilder
+                    fullText.append(processText(intro)).append("\n");
+                    originalText.append(intro).append("\n");
+
                     // Go through all sides of the PDF
                     for (int page = pageNumber; page < pageNumberEnd; page++) { 
                         pdfStripper.setStartPage(page + 1);
@@ -125,7 +129,10 @@ public class PdfToTxt {
                         }
                     }
 
-                    //! still makes new pages with "\n"
+                    // append the outro to the StringBuilder
+                    fullText.append(processText(outro)).append("\n");
+                    originalText.append(outro).append("\n");
+
 
                     //? Here are too long lines processed
                     String processedLongLines = processLongLines(   //check for long lines
@@ -152,10 +159,6 @@ public class PdfToTxt {
 
             }//EO-for
         }//OFif
-
-        //! Important
-        System.out.println(" -- for testing if something is double use: ^(.*)(?:\r?\n\1)+$ with $1");
-
     }//EOF
 
     // Function for text processing
@@ -169,8 +172,7 @@ public class PdfToTxt {
             .replaceAll("[.?!] \\s*", "$0\n") //.|?|! with spaces, is replaced by \n
             .replaceAll("[.?!]\"\\s*", "$0\n"); //.|?|! with ", is replaced by \n
                                                                   
-            //! maybe add \n after ";"
-            // if too many: � --> problem might be ß
+            //* maybe add \n after ";"  -- depends on the book
         }
 
 
@@ -178,10 +180,9 @@ public class PdfToTxt {
     private static String normalizeText(String text) {
 
         // Header processing for individual words (if needed)
-        //* for debugging: commented out
-        //text = combineHeader(text);     //! HeaderAwareStripper does not regonize "6.2" in Y2 V1
+        text = combineHeader(text);
 
-         // Remove diacritical marks, accents, etc.
+        // Remove diacritical marks, accents, etc.
         String cleanedText = Normalizer.normalize(text, Normalizer.Form.NFD); 
         cleanedText = cleanedText.replaceAll("\\p{M}", "");
  
@@ -203,11 +204,10 @@ public class PdfToTxt {
              .replace("•", "/")
              .replace("\t", " ")
              .replace("(?m)^[\\s]*$[\n\r]{1,}", "") // empty lines
-             //.replace("ßß", "\n") 
             .trim();
     }
 
-    // Word-based search
+    // Word-based search    ---     //* for testing if something is double use: ^(.*)(?:\r?\n\1)+$ with $1
     private static String processLongLines(String processedText, String originalText) {
         final int LONG_LINE_THRESHOLD = 250; //^.{250,}$
         final double MATCH_THRESHOLD = 0.8; // 80% of the words must match
@@ -322,6 +322,7 @@ public class PdfToTxt {
              .replace("ßßß", " ") // words inside headers
              .replace("ßß", "\n") // end of headers
              .replace("ß", "\n"); // beginning of headers
+             // if too many: � --> problem might be ß
     }
     
 
