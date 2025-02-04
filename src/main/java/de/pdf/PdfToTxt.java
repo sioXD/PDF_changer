@@ -83,11 +83,9 @@ public class PdfToTxt {
                         afterParts = fileVolume_console.substring(midIndex).trim();
                     }
 
-
+                    // console output
                     System.out.print(count + "/" + files.length); // show count
                     System.out.print(" ~~~ (" + afterParts + ")"); // Names of the files 
-
-
 
 
                     //custom starting point
@@ -104,9 +102,10 @@ public class PdfToTxt {
                     }
 
 
+
                     //make Introduction
                     String intro = "Hello, and thank you for listening with Pixco. Just a few reminders before we begin. " + beforeParts + " Illustrations will be announced, so please listen for the narrator to say, please view the illustration. " + fileVolume + ", written by Syougo Kinugasa. Art by Tomo Sessionsaku. Audio by Pixco."; //Author and Illustrator needs to be made dynamic
-                    fullText.append(processText(intro));
+                    fullText.append(processText(intro)).append("\n");
                     
                     // Go through all sides of the PDF
                     for (int page = pageNumber; page < pageNumberEnd; page++) { 
@@ -119,21 +118,24 @@ public class PdfToTxt {
                         // Check whether the page is blank or only consists of images
                         if (text.isEmpty()) {
                             fullText.append("\nPlease view the Illustration.\n");
+                            originalText.append("\nPlease view the Illustration.\n");
                         } else {
-                            fullText.append(processText(text)).append(" "); //StringBuilder with processed text
+                            fullText.append(text).append(" "); //StringBuilder with processed text
                             originalText.append(text).append("\n"); //StringBuilder with original text
                         }
                     }
 
+                    //! still makes new pages with "\n"
+
                     //? Here are too long lines processed
                     String processedLongLines = processLongLines(   //check for long lines
-                        fullText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", ""), 
-                        originalText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "")
+                        processText(fullText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "")), // deletes all empty lines
+                        originalText.toString().replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "") // deletes all empty lines
                     ); 
 
 
                     // Final cleanup
-                    String finalCleaned = processedLongLines.replaceAll("(?m)^[\\s]*$[\n\r]{1,}", "");
+                    String finalCleaned = processedLongLines.replaceAll("(?m)^[\\s]*$[\n\r]{1,}", ""); // deletes all empty lines
 
                     // Write the edited text to the output file
                     try (FileWriter writer = new FileWriter(outputFile)) {
@@ -152,7 +154,7 @@ public class PdfToTxt {
         }//OFif
 
         //! Important
-        System.out.println("for testing if something is double use: ^(.*)(?:\r?\n\1)+$ with $1");
+        System.out.println(" -- for testing if something is double use: ^(.*)(?:\r?\n\1)+$ with $1");
 
     }//EOF
 
@@ -176,11 +178,12 @@ public class PdfToTxt {
     private static String normalizeText(String text) {
 
         // Header processing for individual words (if needed)
-        text = combineHeader(text); 
+        //* for debugging: commented out
+        //text = combineHeader(text);     //! HeaderAwareStripper does not regonize "6.2" in Y2 V1
 
          // Remove diacritical marks, accents, etc.
-         String cleanedText = Normalizer.normalize(text, Normalizer.Form.NFD); 
-         cleanedText = cleanedText.replaceAll("\\p{M}", "");
+        String cleanedText = Normalizer.normalize(text, Normalizer.Form.NFD); 
+        cleanedText = cleanedText.replaceAll("\\p{M}", "");
  
         return cleanedText
              .replace("No.", "Number") //No. 11 --> Number 11
@@ -199,7 +202,8 @@ public class PdfToTxt {
              .replace("÷", "/")
              .replace("•", "/")
              .replace("\t", " ")
-             .replace("ßß", "\n")
+             .replace("(?m)^[\\s]*$[\n\r]{1,}", "") // empty lines
+             //.replace("ßß", "\n") 
             .trim();
     }
 
@@ -314,37 +318,10 @@ public class PdfToTxt {
 
     //Fix Headers
     private static String combineHeader(String text) {
-        StringBuilder result = new StringBuilder();
-        String[] fragments = text.split("ßß"); // Split text to "ßß". 
-
-        StringBuilder headerBuffer = new StringBuilder(); // buffer for the header merge
-        int countHead = 0;
-    
-        for (String fragment : fragments) {
-            fragment = fragment.trim();
-            //System.out.println(fragment);
-    
-            if (fragment.startsWith("ß")) { // fragment is part of header
-                if (countHead == 0){
-                    headerBuffer.append("ß" + fragment); //make it so that \n is at the beginning
-                    countHead += 1;
-                }else{
-                    headerBuffer.append(fragment.replaceAll("ß", "")).append(" "); // delete "ß" and add space
-                }
-            } else { //  normal Text
-                if (headerBuffer.length() > 0) { 
-                    result.append(headerBuffer.toString().trim()).append("ßß");
-                    headerBuffer.setLength(0); 
-                }
-                result.append(fragment); // add normal text
-            }
-        }
-        // check for errors
-        if (headerBuffer.length() > 0) {
-            result.append(headerBuffer.toString().trim()).append("ßß");
-        }
-    
-        return result.toString();
+        return text
+             .replace("ßßß", " ") // words inside headers
+             .replace("ßß", "\n") // end of headers
+             .replace("ß", "\n"); // beginning of headers
     }
     
 
