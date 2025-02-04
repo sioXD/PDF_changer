@@ -32,6 +32,8 @@ second: scraping PDF Documents and copying all the text in an .txt document.
 
 ## TODO
 
+- better folder Structure
+
 - better input handling (main)
 
 - better footer removing (ptt)
