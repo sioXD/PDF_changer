@@ -58,7 +58,7 @@ public class Get_FontSize_and_Position {
     }
 
     public static void main(String[] args) {
-        File pdfFile = new File("src\\PdfToTxt\\Pdf\\Classroom of the Elite (Light Novel) Vol. 2.pdf");
+        File pdfFile = new File("src\\main\\resources\\PdfToTxt\\Pdf\\"); // Path of the file to check (relative path)
         File outputFile = new File("output.txt");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
             analyzeFontSizesAndPositions(pdfFile, writer);
